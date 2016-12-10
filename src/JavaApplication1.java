@@ -22,8 +22,9 @@ public class JavaApplication1 {
 
     /**
      * @param args the command line arguments
+     * 
      */
-    public static void main(String[] args) throws NoSuchProviderException, InvalidKeyException, SignatureException {
+    public static void main(String[] args) {
         
         
 
@@ -52,16 +53,18 @@ public class JavaApplication1 {
             Enumeration aliasesEnum = ks.aliases();
             
             //Ver certificados e etc do cartao
+            
             //while (aliasesEnum.hasMoreElements()) {
                 String alias = (String)aliasesEnum.nextElement();
                 System.out.println("Alias: " + alias);
-                X509Certificate cert =
+                X509Certificate cert = 
                 (X509Certificate) ks.getCertificate(alias);
                // System.out.println("Certificate: " + cert);
                 PrivateKey privateKey =
                    (PrivateKey) ks.getKey(alias, null);
                 System.out.println("Private key: " + privateKey);
-                System.out.println("Signature: " + cert.getSignature());
+                System.out.println("Signature: " + 
+                        Arrays.toString(cert.getSignature()));
              //}
 
             
@@ -73,16 +76,17 @@ public class JavaApplication1 {
              
             
             FileInputStream datafis = new FileInputStream("Tobesiggn");
-            BufferedInputStream bufin = new BufferedInputStream(datafis);
-
-            byte[] buffer = new byte[1024];
-            int len;
-            while (bufin.available() != 0) {
-                len = bufin.read(buffer);
-                dsa.update(buffer, 0, len);
-            };
-            
-            bufin.close();
+            try (BufferedInputStream bufin = new BufferedInputStream(datafis)) {
+                byte[] buffer = new byte[1024];
+                int len;
+                while (bufin.available() != 0) {
+                    len = bufin.read(buffer);
+                    dsa.update(buffer, 0, len);
+                }
+            } catch (SignatureException ex) {
+                Logger.getLogger(JavaApplication1.class.getName())
+                        .log(Level.SEVERE, null, ex);
+            }
             
             //boolean verifies = sig.verify(sigToVerify);
 
@@ -91,27 +95,29 @@ public class JavaApplication1 {
             byte[] realSig = dsa.sign();
 
         
-            /* Save the signature in a file */
-            FileOutputStream sigfos = new FileOutputStream("sig");
-            sigfos.write(realSig);
-
-            sigfos.close();
+            try ( /* to Save the signature in a file */ 
+                FileOutputStream sigfos = new FileOutputStream("sig")) {
+                sigfos.write(realSig);
+            }
 
 
             /* Save the public key in a file */
             byte[] key = pub.getEncoded();
-            FileOutputStream keyfos = new FileOutputStream("suepk");
-            keyfos.write(key);
-
-            keyfos.close();
-             
-             //System.out.println("OLA\n\n" + ks.getCertificate(alias));
-             //Signature sig = new Signature;
+            try (FileOutputStream keyfos = new FileOutputStream("suepk")) {
+                keyfos.write(key);
+                //System.out.println("OLA\n\n" + ks.getCertificate(alias));
+                //Signature sig = new Signature;
+            }
             
             
        
-        } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException e) {
+        } catch (IOException | KeyStoreException | NoSuchAlgorithmException 
+               | CertificateException | UnrecoverableKeyException
+               | InvalidKeyException e) {
+            System.err.println("EXCEPTION CATCH: ");
             Logger.getLogger(JavaApplication1.class.getName()).log(Level.SEVERE, null, e);
+        } catch (SignatureException ex) {
+            Logger.getLogger(JavaApplication1.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
