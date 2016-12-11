@@ -1,2 +1,2 @@
-name=CartaoCidadao
-library=/usr/local/lib/libpteidpkcs11.so
+name = CartaoCidadao
+library = C:\Windows\system32\pteidpkcs11.dll
