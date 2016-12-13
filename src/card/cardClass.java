@@ -48,8 +48,12 @@ public class cardClass {
     
     /**
      *
+     * @throws java.io.IOException
+     * @throws java.security.KeyStoreException
+     * @throws java.security.NoSuchAlgorithmException
+     * @throws java.security.cert.CertificateException
      */
-    public void init() {
+    public void init() throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
        Pair returned = loadPkcs11();
            
        ks = (KeyStore) returned.getKey();
@@ -58,11 +62,9 @@ public class cardClass {
     
    
     public boolean signData(
-            String filetoSign, String fileWithSign, String fileWithPub) {
+            String filetoSign, String fileWithSign, String fileWithPub) throws IOException, SignatureException, KeyStoreException, InvalidKeyException, NoSuchAlgorithmException, UnrecoverableKeyException {
 
-        try {
-
-
+   
                //Get Last Certificate - Signature
         for (Enumeration e =  ks.aliases(); e.hasMoreElements( );)
                                     System.out.println("\t" + e.nextElement( ));
@@ -130,17 +132,7 @@ public class cardClass {
         }
 
         return true;
-            
-        } catch (IOException | InvalidKeyException | KeyStoreException 
-                 | NoSuchAlgorithmException | SignatureException 
-                 | UnrecoverableKeyException e) {
-            
-            System.err.println("EXCEPTION: ");
-            Logger.getLogger(cardClass.class.getName()).log(Level.SEVERE, null, e);
-            return false;
-        }
-
-         
+        
      }
     
     public boolean verifySignature(
@@ -205,7 +197,7 @@ public class cardClass {
     }
 }
     
-    private Pair<KeyStore,Provider> loadPkcs11(){
+    private Pair<KeyStore,Provider> loadPkcs11() throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException{
     String pkcs11ConfigSettings;
         
         if (PlatformUtil.isWindows()){
@@ -224,23 +216,15 @@ public class cardClass {
 	Security.addProvider(p);
 	KeyStore ks = null;
 	
-	try {
+        ks = KeyStore.getInstance("PKCS11");				
+        ks.load(null,null);
 
-            ks = KeyStore.getInstance("PKCS11");				
-            ks.load(null,null);
-
-            for (Enumeration e =  ks.aliases(); e.hasMoreElements( );)
-                            System.out.println("\t" + e.nextElement( ));
+        for (Enumeration e =  ks.aliases(); e.hasMoreElements( );)
+                        System.out.println("\t" + e.nextElement( ));
 
 
                 
-	} catch (IOException | KeyStoreException 
-                | NoSuchAlgorithmException | CertificateException e1) {
-            System.err.print("[loadPkcs11]: ");
-            Logger.getLogger(cardClass.class.getName())
-                    .log(Level.SEVERE, null, e1);
 
-	}
 	
         Pair toReturn = new Pair<>(ks,p);
 	return toReturn;			 
